@@ -20,7 +20,6 @@ class ProductController extends Controller
     }
     public function create(Request $request)
     {
-        // Validate the form data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
@@ -45,7 +44,7 @@ class ProductController extends Controller
     }
     public function manage($id)
     {
-        $product = Product::findOrFail($id); // Fetch a single product instance
+        $product = Product::findOrFail($id);
         $variants = ProductVarient::where('product_id', $id)->get();
 
         return view('manage', compact('product', 'variants'));
@@ -54,25 +53,20 @@ class ProductController extends Controller
 
     public function storeVariants(Request $request)
     {
-        // Validate the form data
         $validated = $request->validate([
             'name.*' => 'required|string|max:255',
             'product_id' => 'required|exists:products,id'
         ]);
 
-        // Get the product ID (assuming it's passed in the request or session)
-        $productId = $validated['product_id']; // Replace with your actual product ID retrieval logic
+        $productId = $validated['product_id']; 
 
-        // Process each variant name and store in product_variants table
         foreach ($validated['name'] as $variantName) {
-            // Create a new ProductVariant instance
             $variant = new ProductVarient();
             $variant->product_id = $productId;
             $variant->attribute = $variantName;
             $variant->save();
         }
 
-        // Redirect back or to a success page
         return redirect()->route('showproducts')->with('success', 'Variants added successfully!');
     }
     public function managevalues(Request $request, $id)
@@ -108,43 +102,39 @@ class ProductController extends Controller
 
         $variantIds = [];
         foreach ($validatedData['variants'] as $variantId => $variantData) {
-            $variantValue = ProductVarientValues::create([
-                'varient_id' => $variantId, // Assuming variant_id is the actual ID of the variant
-                'value' => $variantData['value'],
-                // If stock is stored in the ProductVariantValues table, uncomment the line below
-                // 'stock' => $validatedData['stock'],
-            ]);
+            $variantValue = ProductVarientValues::firstOrCreate(
+                ['varient_id' => $variantId, 'value' => $variantData['value']]
+            );
 
-            $variantIds[] = $variantId;
+            $variantIds[] = $variantData['value'];
         }
 
         Option::create([
             'product_id' => $validatedData['product_id'],
-            'variant_id' => json_encode($variantIds), // Convert array to JSON format
-            'value_id' => $variantValue->id, // Assuming $variantValue is the last created ProductVariantValue instance
+            'variant_id' => json_encode($variantIds), 
             'stock' => $validatedData['stock'],
         ]);
 
         return redirect()->route('showproducts')->with('success', 'Variant values and options added successfully!');
     }
-    public function showoptions($id)
+
+    public function showOptions($productId)
     {
-        $product = Product::findOrFail($id);
-    $options = $product->options()->get(['variant_id', 'value_id', 'stock']);
-
-    // Retrieve associated variant information for each option
-    foreach ($options as $option) {
-        $variantIds = json_decode($option->variant_id);
-
-        // Example assuming ProductVariantValues model and relationship exists
-        $variants = ProductVarientValues::whereIn('id', $variantIds)->get();
-
-        // Format the variants information as needed (example)
-        $option->variants = $variants->pluck('value_id', 'id')->toArray();
+        $product = Product::findOrFail($productId);
+        $productvariant=ProductVarient::where('product_id', $productId)->get();
+    
+        $options = Option::where('product_id', $productId)->get();
+    
+        $options->transform(function ($option) {
+            $option->variant_values = json_decode($option->variant_id, true);
+            return $option;
+        });
+    
+        return view('options', compact('product', 'options','productvariant'));
     }
+    
+    
 
-        return view('options', compact('product', 'options'));
-    }
 
 
 

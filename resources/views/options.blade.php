@@ -1,10 +1,11 @@
+<!-- resources/views/options.blade.php -->
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details</title>
+    <title>Product Options</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,11 +18,13 @@
             margin-bottom: 20px;
         }
 
-        th,
-        td {
-            padding: 8px;
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
         }
 
         th {
@@ -29,47 +32,29 @@
         }
     </style>
 </head>
-
 <body>
-    <h1>Product Details</h1>
-
-    <h2>{{ $product->name }}</h2>
-    <p><strong>Price:</strong> {{ $product->price }}</p>
-
-    <h3>Stock:</h3>
-    <!-- Display stock information -->
-
-    <h3>Options:</h3>
+    <h1>Options for {{ $product->name }}</h1>
     <table>
-        <thead>
+    <thead>
             <tr>
-                <th>Variant</th>
-                <th>Value</th>
+                @foreach($productvariant as $variant)
+                    <th>{{ $variant->attribute }}</th>
+                @endforeach
                 <th>Stock</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-    @foreach($options as $option)
-        @foreach($option->variants as $variantId => $variantValue)
-            <tr>
-                <td>{{ $variantValue }}</td> <!-- Display the variant value -->
-                <td>{{ $option->value }}</td> <!-- Display the option value -->
-                <td>{{ $option->stock }}</td> <!-- Display the stock -->
-                <td>
-                    <!-- Add actions here if needed -->
-                </td>
-            </tr>
-        @endforeach
-    @endforeach
-</tbody>
-
-
-
+            @foreach($options as $option)
+                <tr>
+                    @foreach($option->variant_values as $value)
+                        <td>{{ $value }}</td>
+                    @endforeach
+                    <td>{{ $option->stock }}</td>
+                </tr>
+            @endforeach
+        </tbody>
     </table>
-
-    <!-- Additional content or actions -->
-
 </body>
-
 </html>
+
+

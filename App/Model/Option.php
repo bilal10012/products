@@ -22,6 +22,6 @@ class Option extends Model
 
     public function value()
     {
-        return $this->belongsTo(ProductVarientValues::class, 'value_id');
+        return $this->hasMany(ProductVarientValues::class, 'varient_id');
     }
 }

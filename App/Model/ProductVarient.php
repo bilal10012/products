@@ -16,4 +16,9 @@ class ProductVarient extends Model
     public function products(){
         return $this->belongsTo(Product::class,"product_id",'id');
     }
+    public function values()
+{
+    return $this->hasMany(ProductVarientValues::class, 'varient_id');
+}
+
 }
