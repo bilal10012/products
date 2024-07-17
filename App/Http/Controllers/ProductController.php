@@ -40,7 +40,7 @@ class ProductController extends Controller
     }
     public function show()
     {
-        $products = Product::with('categories')->get();
+        $products = Product::with('categories', 'options')->get();
         return view('showproducts', compact('products'));
     }
     public function manage($id)
@@ -97,35 +97,54 @@ class ProductController extends Controller
 
 
 
-
     public function submitForm(Request $request)
     {
         $validatedData = $request->validate([
             'product_id' => 'required|integer|exists:products,id',
             'variants' => 'required|array',
-            'variants.*.name' => 'required|string|max:255',
             'variants.*.value' => 'required|string|max:255',
             'stock' => 'required|integer|min:0',
         ]);
 
+        $variantIds = [];
         foreach ($validatedData['variants'] as $variantId => $variantData) {
             $variantValue = ProductVarientValues::create([
-                'varient_id' => $variantId,
+                'varient_id' => $variantId, // Assuming variant_id is the actual ID of the variant
                 'value' => $variantData['value'],
+                // If stock is stored in the ProductVariantValues table, uncomment the line below
+                // 'stock' => $validatedData['stock'],
             ]);
 
-            // Option::create([
-            //     'product_id' => $validatedData['product_id'],
-            //     'variant_id' => $variantId,
-            //     'value_id' => $variantValue->id,
-            //     'stock' => $validatedData['stock'],
-            // ]);
+            $variantIds[] = $variantId;
         }
 
-        return redirect()->route('showproducts')->with('success', 'Variant values and options added successfully!');
+        Option::create([
+            'product_id' => $validatedData['product_id'],
+            'variant_id' => json_encode($variantIds), // Convert array to JSON format
+            'value_id' => $variantValue->id, // Assuming $variantValue is the last created ProductVariantValue instance
+            'stock' => $validatedData['stock'],
+        ]);
 
+        return redirect()->route('showproducts')->with('success', 'Variant values and options added successfully!');
+    }
+    public function showoptions($id)
+    {
+        $product = Product::findOrFail($id);
+    $options = $product->options()->get(['variant_id', 'value_id', 'stock']);
+
+    // Retrieve associated variant information for each option
+    foreach ($options as $option) {
+        $variantIds = json_decode($option->variant_id);
+
+        // Example assuming ProductVariantValues model and relationship exists
+        $variants = ProductVarientValues::whereIn('id', $variantIds)->get();
+
+        // Format the variants information as needed (example)
+        $option->variants = $variants->pluck('value_id', 'id')->toArray();
     }
 
+        return view('options', compact('product', 'options'));
+    }
 
 
 

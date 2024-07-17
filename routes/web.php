@@ -26,3 +26,6 @@ Route::get('/products/{id}/manage-values', [ProductController::class, 'manageval
 Route::get('/manage-attribute-values/{id}', [ProductController::class, 'manageattributevalues'])->name('manage-attribute-values');
 
 Route::post('/form', [ProductController::class, 'submitForm'])->name('form.submit');
+// routes/web.php
+
+Route::get('/options/{id}', [ProductController::class, 'showoptions'])->name('products.show');
